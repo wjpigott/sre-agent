@@ -1,0 +1,10 @@
+// Pre-deployment / troubleshooting check: is Change Tracking sending software
+// inventory, and from how many machines per day?
+// Expect a steady machine count. Dips show ingestion gaps; the report flags
+// machines whose last inventory is more than 48h old.
+ConfigurationData
+| where TimeGenerated > ago(30d)
+| where ConfigDataType == "Software"
+| summarize Machines = dcount(Computer), Rows = count(),
+            AppRows = countif(SoftwareType == "Application") by bin(TimeGenerated, 1d)
+| sort by TimeGenerated asc

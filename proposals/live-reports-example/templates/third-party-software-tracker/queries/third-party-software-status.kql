@@ -1,0 +1,40 @@
+// Standalone status query (no Live Report needed). Run it in Log Analytics > Logs,
+// or wire it into a workbook or alert.
+// "Latest" values are a point-in-time reference. Keep them in sync with VERSION_DB
+// in report/third-party-software-tracker.html.
+// Reference verified: 2026-10-15
+let sw = ConfigurationData
+| where TimeGenerated > ago(7d)
+| where ConfigDataType == "Software" and SoftwareType == "Application"
+| where isnotempty(Publisher) and Publisher !has "Microsoft"
+| where SoftwareName !has "Update for" and SoftwareName !has "Security Update" and SoftwareName !has "Hotfix for" and SoftwareName !has "Definition Update";
+let lastInv = sw | summarize LastInventory = max(TimeGenerated) by Computer;
+sw
+| summarize arg_max(TimeGenerated, *) by Computer, SoftwareName
+| join kind=inner lastInv on Computer
+| where TimeGenerated >= LastInventory - 26h
+| extend Product = case(
+    SoftwareName matches regex @"(?i)^java 8 update \d+", "Java 8",
+    SoftwareName startswith "7-Zip", "7-Zip",
+    SoftwareName == "Google Chrome", "Google Chrome",
+    SoftwareName matches regex @"(?i)^adobe acrobat" and SoftwareName !has "Reader", "Adobe Acrobat",
+    SoftwareName matches regex @"(?i)^python 3\.13\.\d+", "Python 3.13",
+    SoftwareName == "Node.js" and CurrentVersion startswith "24.", "Node.js 24",
+    "Untracked")
+| extend Installed = case(
+    Product == "Java 8", strcat("8.0.", extract(@"(?i)update (\d+)", 1, SoftwareName)),
+    Product == "Python 3.13", extract(@"(3\.13\.\d+)", 1, SoftwareName),
+    CurrentVersion)
+| extend Latest = case(
+    Product == "Java 8", "8.0.503",
+    Product == "7-Zip", "26.04",
+    Product == "Google Chrome", "155.0.8059.79",
+    Product == "Adobe Acrobat", "26.002.22031",
+    Product == "Python 3.13", "3.13.16",
+    Product == "Node.js 24", "24.22.0",
+    "")
+| extend Status = case(Product == "Untracked", "Untracked",
+    parse_version(Installed) < parse_version(Latest), "Update Available",
+    "Current")
+| summarize Machines = make_set(Computer), MachineCount = dcount(Computer) by Product, Installed, Latest, Status
+| sort by Status asc, Product asc
