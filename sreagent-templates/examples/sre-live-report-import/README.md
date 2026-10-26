@@ -1,49 +1,97 @@
-# Clone Azure SRE Agent Live Reports
+# Export and Import Azure SRE Agent Live Reports
 
-`livereportclone.py` copies saved Live Report bundles from a folder available
-to the target agent into that target agent. The report bundles stay independent
-of this utility.
+`livereportclone.py` has two workflows:
+
+1. **Export** a saved report from a source SRE Agent into a portable
+   `.livereport.json` file that you can share.
+2. **Import** that file into a target SRE Agent.
+
+The report bundle is independent of this utility. The workflow uses the SRE
+Agent chat API and its `ListReports`, `GetReport`, and `SaveReport` tools;
+there is no documented direct Live Reports REST export endpoint.
 
 ## Requirements
 
 - Python 3.8+ and Azure CLI, with `az login` completed.
-- The target agent's repository connection must expose the source folder and
-  this script under `codeRefs/<repo>/`.
-- Your identity must be able to start a thread on the target agent. Any
-  tool-access approval remains a manual action in the SRE Agent portal.
+- Your identity can start a thread on the source agent to export, or the target
+  agent to import.
+- The source and target agents are identified by their ARM resource URIs:
+  `/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<agent-name>`.
+- Reports that require approval still require a human to review the request in
+  the SRE Agent portal.
 
-`--source` is the folder path as the **target agent** sees it. It is not a
-local workstation path or a source-agent resource URI. The folder must contain
-one or more `*.livereport.json` bundles directly.
-By default, the clone utility is expected in the same connected repository;
-use `--script-path` if it is in a different connected repository.
+## Export from the source agent
 
-## Clone reports
-
-Clone every bundle in a connected repository folder:
+Export one report by its exact name:
 
 ```bash
-python3 livereportclone.py \
-  --source codeRefs/<repo>/sreagent-templates/examples/SRELiveReportImport \
-  --target /subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<agent-name> \
-  --allReports
+python3 livereportclone.py export \
+  --source /subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<source-agent> \
+  --reports "Third-Party Software Update Tracker" \
+  --out ./livereport-export
 ```
 
-Clone reports by their exact names (CSV syntax supports quoted names):
+Or export all reports:
 
 ```bash
-python3 livereportclone.py \
-  --source codeRefs/<repo>/sreagent-templates/examples/SRELiveReportImport \
-  --target /subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<agent-name> \
-  --reports "Third-Party Software Update Tracker"
+python3 livereportclone.py export \
+  --source /subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<source-agent> \
+  --allReports \
+  --out ./livereport-export
 ```
 
-Use `--set name=value` to replace required bundle bindings, and `--dry-run`
-to inspect the target-agent instructions without making API calls. The script
-does not automatically approve tool requests. It asks the target agent to
-stop if a report with the same name already exists, rather than overwriting it.
+The tool starts a chat with the source agent, asks it to use `ListReports` and
+`GetReport`, then validates and writes the returned bundle file(s) to the
+output directory. It only accepts complete JSON bundles with a matching HTML
+checksum; it does not save truncated or invalid output.
 
-The clone command uses the target agent's data-plane chat API to prepare the
-bundles from its connected repository and call `SaveReport`. The utility does
-not fetch reports from a source agent URI; use a folder of saved report bundles
-for this workflow.
+Live Report source is returned through chat, so export is currently limited to
+**128 KiB of HTML per report**. This command does not provide an alternate
+repository transfer for larger reports. Use `--dry-run` to preview the request
+without contacting Azure.
+
+## Share and import into the target agent
+
+Share the exported `.livereport.json` file with the target-agent operator. They
+can import it directly from disk:
+
+```bash
+python3 livereportclone.py import \
+  --bundle ./livereport-export/Third-Party-Software-Update-Tracker-<hash>.livereport.json \
+  --target /subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<target-agent> \
+  --set "subscription=SUBSCRIPTION_ID" \
+  --set "workspace=WORKSPACE_ID" \
+  --set "resourceGroup=WORKSPACE_RESOURCE_GROUP"
+```
+
+Replace the example binding values with actual values for the target
+environment. Only provide `--set` values for bindings present in the bundle.
+Import validates the bundle and checksum, applies requested replacements, then
+sends the bundle to the target agent in a chat request. The bundle plus
+instructions must fit within 512 KiB, and the HTML is limited to **128 KiB**.
+The target agent checks for a report with the same name and stops rather than
+overwriting it.
+`--dry-run` validates the bundle and bindings without contacting Azure.
+
+The agent may ask for tool-access approval while saving. The CLI does not
+approve requests; review them in the SRE Agent portal. A pending approval is
+reported as a non-success result.
+
+Exported bundles preserve the report HTML and metadata; they are not
+anonymized. Review the bundle for customer names, environment identifiers, or
+other sensitive content before sharing it.
+
+## Troubleshooting
+
+- **No complete bundle returned:** inspect the printed source thread in the
+  SRE Agent portal. The report may exceed the chat output limit, or the agent
+  may not have `ListReports`/`GetReport` available.
+- **Checksum mismatch:** the HTML was altered or truncated during export or
+  sharing. Re-export it from the saved report source.
+- **Required binding missing:** rerun import with `--set name=value` for every
+  required binding reported by the tool.
+- **Import stopped because the name exists:** rename the report or remove the
+  existing target report yourself, then retry. The utility does not overwrite.
+- **401 / permission error:** check Azure CLI sign-in and the caller's access
+  to the relevant agent. The data-plane token audience is
+  `https://azuresre.dev`.
