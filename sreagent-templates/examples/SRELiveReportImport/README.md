@@ -14,7 +14,7 @@ clone utility:
 
 ```bash
 python3 sreagent-templates/examples/sre-live-report-import/livereportclone.py \
-  --source codeRefs/<repo>/sreagent-templates/examples/third-party-software-update-tracker \
+  --source codeRefs/<repo>/sreagent-templates/examples/SRELiveReportImport \
   --target /subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<agent-name> \
   --reports "Third-Party Software Update Tracker" \
   --set "subscription=<SUBSCRIPTION_ID>" \

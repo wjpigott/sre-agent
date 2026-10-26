@@ -24,7 +24,7 @@ Clone every bundle in a connected repository folder:
 
 ```bash
 python3 livereportclone.py \
-  --source codeRefs/<repo>/sreagent-templates/examples/third-party-software-update-tracker \
+  --source codeRefs/<repo>/sreagent-templates/examples/SRELiveReportImport \
   --target /subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<agent-name> \
   --allReports
 ```
@@ -33,7 +33,7 @@ Clone reports by their exact names (CSV syntax supports quoted names):
 
 ```bash
 python3 livereportclone.py \
-  --source codeRefs/<repo>/sreagent-templates/examples/third-party-software-update-tracker \
+  --source codeRefs/<repo>/sreagent-templates/examples/SRELiveReportImport \
   --target /subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<agent-name> \
   --reports "Third-Party Software Update Tracker"
 ```
