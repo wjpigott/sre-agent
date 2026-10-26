@@ -13,7 +13,7 @@ To install it, connect this repository to the target SRE Agent and use the
 clone utility:
 
 ```bash
-python3 sreagent-templates/examples/live-report-clone/livereportclone.py \
+python3 sreagent-templates/examples/sre-live-report-import/livereportclone.py \
   --source codeRefs/<repo>/sreagent-templates/examples/third-party-software-update-tracker \
   --target /subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<agent-name> \
   --reports "Third-Party Software Update Tracker" \

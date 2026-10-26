@@ -339,7 +339,7 @@ def clone(args):
     names = [] if args.all_reports else parse_csv_names(args.reports)
     repo_root = "/".join(source.split("/")[:2])
     script_path = args.script_path or (
-        repo_root + "/sreagent-templates/examples/live-report-clone/livereportclone.py"
+        repo_root + "/sreagent-templates/examples/sre-live-report-import/livereportclone.py"
     )
     prompt = build_prompt(args, source, script_path, names)
     if args.dry_run:
