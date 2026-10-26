@@ -3,7 +3,7 @@
 **Status: draft proposal, not a finished recipe, and not a pull request yet.**
 It accompanies a GitHub issue asking the maintainers where (or whether) this
 kind of asset fits in `sreagent-templates/`, since the existing
-[Recipe Structure](../../sreagent-templates/CONTRIBUTING.md#recipe-structure)
+[Recipe Structure](../sreagent-templates/CONTRIBUTING.md#recipe-structure)
 has no category for it today.
 
 ## What this is
@@ -110,8 +110,8 @@ Requires the Azure CLI and `az login`.
 ```bash
 python3 live_report_bundle.py install \
   --agent-id /subscriptions/<agent-sub>/resourceGroups/<agent-rg>/providers/Microsoft.App/agents/<agent-name> \
-  --repo-path codeRefs/<repo>/proposals/live-reports-example/reports \
-  --script-path codeRefs/<repo>/proposals/live-reports-example/live_report_bundle.py \
+  --repo-path codeRefs/<repo>/live-report-import-example/reports \
+  --script-path codeRefs/<repo>/live-report-import-example/live_report_bundle.py \
   --bundle third-party-software-update-tracker.livereport.json \
   --set subscription=<SUBSCRIPTION_ID> --set workspace=<WORKSPACE_ID> --set resourceGroup=<RESOURCE_GROUP>
 ```
@@ -201,7 +201,7 @@ does.
 ## What's deliberately not included here
 
 This is **not** shaped as a recipe per
-[CONTRIBUTING.md](../../sreagent-templates/CONTRIBUTING.md): there's no
+[CONTRIBUTING.md](../sreagent-templates/CONTRIBUTING.md): there's no
 `agent.json`, `connectors.json`, `expected-config.json`, skill, or subagent
 here, and it hasn't been run through `verify-agent.sh` or the three deploy
 backends. That's intentional — turning this into a full recipe only makes
