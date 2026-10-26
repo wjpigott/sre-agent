@@ -4,22 +4,8 @@
   "metadata": {
     "name": "Third-Party Software Update Tracker",
     "description": "Third-party Windows application versions from Change Tracking (ConfigurationData, latest inventory per machine) compared numerically against an embedded vendor reference DB (2026-10-15). No embedded data; recommended for new environments.",
-    "sourceReportId": null,
-    "sourceVersion": null,
-    "sourceAgent": null,
     "exportedAt": "2026-10-19T16:08:11Z",
-    "exportedBy": "live_report_bundle.py 1.0.0 (clean)",
-    "cleaned": {
-      "placeholders": [
-        "__RESOURCE_GROUP__",
-        "__SUBSCRIPTION_ID__",
-        "__WORKSPACE__"
-      ],
-      "pseudonymizedValues": 0,
-      "replacements": 3,
-      "leakScan": "pass",
-      "jsSyntaxCheck": "pass"
-    }
+    "exportedBy": "Azure SRE Agent Live Report example"
   },
   "spec": {
     "allowedTools": [
