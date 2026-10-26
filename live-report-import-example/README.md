@@ -1,10 +1,4 @@
-# Proposal: Live Reports as a sharable Azure SRE Agent recipe asset
-
-**Status: draft proposal, not a finished recipe, and not a pull request yet.**
-It accompanies a GitHub issue asking the maintainers where (or whether) this
-kind of asset fits in `sreagent-templates/`, since the existing
-[Recipe Structure](../sreagent-templates/CONTRIBUTING.md#recipe-structure)
-has no category for it today.
+# Live Report Import Example: Third-Party Software Update Tracker
 
 ## What this is
 
@@ -203,29 +197,9 @@ does.
 | `install` returns 401 | The token must have audience `https://azuresre.dev`, and you need thread-write access on the agent. |
 | Everything in the tracker is "outdated" | The embedded reference versions are stale — see `templates/third-party-software-tracker/README.md` for how to refresh them. |
 
-## What's deliberately not included here
+## Scope
 
-This is **not** shaped as a recipe per
-[CONTRIBUTING.md](../sreagent-templates/CONTRIBUTING.md): there's no
-`agent.json`, `connectors.json`, `expected-config.json`, skill, or subagent
-here, and it hasn't been run through `verify-agent.sh` or the three deploy
-backends. That's intentional — turning this into a full recipe only makes
-sense once there's agreement on where a Live Report belongs in the recipe
-lifecycle.
-
-## Open questions for maintainers
-
-1. Should Live Reports become a new first-class category under
-   `sreagent-templates/` (e.g. `sreagent-templates/live-reports/`), with its
-   own lightweight contribution bar — separate from the full recipe checklist,
-   since it doesn't deploy infrastructure or agent config?
-2. If so, should installation be a manual post-`deploy.sh` step (as shown
-   above), or should `new-agent.sh` / `deploy.sh` learn to install a
-   referenced bundle automatically?
-3. This example is one of three reports originally developed in
-   [wjpigott/azure-arc-sre-agent-demo](https://github.com/wjpigott/azure-arc-sre-agent-demo);
-   would the other two (an Arc fleet-inventory view and a priority/lifecycle
-   view) be worth adding here too, following the same pattern?
-
-Feedback welcome on the tracking issue before any of this becomes a pull
-request.
+This folder demonstrates importing and publishing one Live Report into an
+existing Azure SRE Agent. It does not deploy or configure the agent itself:
+the target agent, Log Analytics workspace, connector access, and permissions
+must already be set up as described above.
