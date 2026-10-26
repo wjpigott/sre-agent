@@ -25,15 +25,10 @@ here.
 | `livereport-bundle.schema.json` | JSON Schema for the bundle format (`sreagent.livereport/v1`). |
 | `templates/third-party-software-tracker/` | Editable source: the report HTML, its KQL queries, and offline regression tests (Node 18+, no dependencies). |
 
-This report has no built-in or fallback data of any kind: every section
-queries live Change Tracking / software-inventory data each time it's opened,
-and the included test suite enforces that (`template ships an empty
-snapshot`, `placeholder CONFIG is rejected before calling the tool`). It's one
-of three reports originally built in
-[wjpigott/azure-arc-sre-agent-demo](https://github.com/wjpigott/azure-arc-sre-agent-demo/tree/main/livereports)
-(the other two cover Arc fleet inventory and priority/lifecycle views, built
-from a shared template) — see the **Open questions** section below for
-whether those should be added here too.
+This report uses live Change Tracking / software-inventory data each time
+it's opened and has no machine-data snapshot or fallback. Its test suite
+enforces that behavior. It tracks installed third-party Windows software and
+compares detected versions against an embedded vendor-version reference.
 
 ## This bundle is already environment-generic
 
@@ -109,8 +104,8 @@ Requires the Azure CLI and `az login`.
 ```bash
 python3 live_report_bundle.py install \
   --agent-id /subscriptions/<agent-sub>/resourceGroups/<agent-rg>/providers/Microsoft.App/agents/<agent-name> \
-  --repo-path codeRefs/<repo>/live-report-import-example/reports \
-  --script-path codeRefs/<repo>/live-report-import-example/live_report_bundle.py \
+  --repo-path codeRefs/<repo>/sreagent-templates/examples/live-report-import-example/reports \
+  --script-path codeRefs/<repo>/sreagent-templates/examples/live-report-import-example/live_report_bundle.py \
   --bundle third-party-software-update-tracker.livereport.json \
   --set subscription=<SUBSCRIPTION_ID> --set workspace=<WORKSPACE_ID> --set resourceGroup=<RESOURCE_GROUP>
 ```
