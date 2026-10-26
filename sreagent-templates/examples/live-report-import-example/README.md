@@ -12,18 +12,26 @@ via its `SaveReport` tool, using a portable `*.livereport.json` bundle.
 
 This folder is a complete, self-contained copy of one full example — not a
 link out to another repository. It includes the report bundle, its editable
-HTML/KQL/test source, and the standalone tool used to build, verify, and
-install it, so everything needed to actually try a Live Report publish is
-here.
+HTML/KQL/test source, and the standalone tool used to export, verify, prepare,
+and install it, so everything needed to try a Live Report publish is here.
+
+The `.livereport.json` file is the installable bundle; the HTML under
+`templates/` is the editable source for that same report. They are two forms
+of one report, not separate reports.
 
 ## What's included
 
 | Path | Purpose |
 |---|---|
-| `reports/third-party-software-update-tracker.livereport.json` | Installable report bundle — third-party Windows application versions from Change Tracking, compared against an embedded vendor-version reference. No embedded machine data; works against any workspace. |
+| `reports/third-party-software-update-tracker.livereport.json` | Installable bundle — third-party Windows application versions from Change Tracking, compared against an embedded vendor-version reference. No embedded machine data; works against any workspace. |
 | `live_report_bundle.py` | Standalone install/verify/export/clean tool (Python 3.8+, standard library only). |
-| `livereport-bundle.schema.json` | JSON Schema for the bundle format (`sreagent.livereport/v1`). |
-| `templates/third-party-software-tracker/` | Editable source: the report HTML, its KQL queries, and offline regression tests (Node 18+, no dependencies). |
+| `templates/third-party-software-tracker/report/third-party-software-tracker.html` | Editable HTML source for the same report in the bundle. |
+| `templates/third-party-software-tracker/queries/` | Report query and standalone inventory/status checks. |
+| `templates/third-party-software-tracker/tests/` | Offline regression tests and fixture (Node 18+, no dependencies). |
+
+The bundle schema is built into `live_report_bundle.py`; run
+`python3 live_report_bundle.py schema` to print it. This keeps one
+authoritative schema instead of a duplicate JSON file.
 
 This report uses live Change Tracking / software-inventory data each time
 it's opened and has no machine-data snapshot or fallback. Its test suite
@@ -48,7 +56,7 @@ compares detected versions against an embedded vendor-version reference.
   queries live Change Tracking / software-inventory data every time it's
   opened, and explicitly shows an unavailable state rather than a cached demo
   result when a query fails.
-- The template's own offline test suite (`node tests/run-tests.js`, 30+
+- The template's own offline test suite (`node templates/third-party-software-tracker/tests/run-tests.js`, 30+
   checks) passes unchanged in this location, confirming the static HTML
   checks, response-shape parsing, version-classification logic, and
   failure-path handling all still hold after moving the files here.
@@ -179,6 +187,23 @@ pseudonymized machine names are still sample data. Prefer scoped live queries
 and an explicit unavailable state over any embedded snapshot, as this example
 does.
 
+## Updating the example's version references
+
+Update `VERSION_DB`, `PY_LATEST`, `NODE_LATEST`, and `VERSION_DB_DATE` in
+`templates/third-party-software-tracker/report/third-party-software-tracker.html`
+using current vendor release information. Keep the `Latest` values in
+`templates/third-party-software-tracker/queries/third-party-software-status.kql`
+in sync, then run the offline tests:
+
+```bash
+node templates/third-party-software-tracker/tests/run-tests.js
+```
+
+Editing the source does not automatically update the installable bundle. To
+include a change in the bundle, publish the updated HTML through an agent,
+export and clean that report using the workflow above, then verify the
+resulting bundle before committing it.
+
 ## Troubleshooting
 
 | Symptom | Fix |
@@ -190,7 +215,7 @@ does.
 | Tracker shows few machines | Run `templates/third-party-software-tracker/queries/inventory-coverage.kql` and check the Change Tracking DCR and AMA. |
 | Repository path is missing under `codeRefs` | Connect the repository inside the SRE Agent itself (not just your editor); verify authentication and clone/index readiness. |
 | `install` returns 401 | The token must have audience `https://azuresre.dev`, and you need thread-write access on the agent. |
-| Everything in the tracker is "outdated" | The embedded reference versions are stale — see `templates/third-party-software-tracker/README.md` for how to refresh them. |
+| Everything in the tracker is "outdated" | The embedded reference versions are stale — update them as described in [Updating the example's version references](#updating-the-examples-version-references). |
 
 ## Scope
 
