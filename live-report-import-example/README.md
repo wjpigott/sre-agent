@@ -31,10 +31,15 @@ here.
 | `livereport-bundle.schema.json` | JSON Schema for the bundle format (`sreagent.livereport/v1`). |
 | `templates/third-party-software-tracker/` | Editable source: the report HTML, its KQL queries, and offline regression tests (Node 18+, no dependencies). |
 
-This is the richest of the three reports in the source demo (the other two are
-an Arc fleet-inventory view and a priority/lifecycle view built from a shared
-template) and is explicitly the one its own documentation recommends for a new
-environment, since it has no built-in/fallback data of any kind.
+This report has no built-in or fallback data of any kind: every section
+queries live Change Tracking / software-inventory data each time it's opened,
+and the included test suite enforces that (`template ships an empty
+snapshot`, `placeholder CONFIG is rejected before calling the tool`). It's one
+of three reports originally built in
+[wjpigott/azure-arc-sre-agent-demo](https://github.com/wjpigott/azure-arc-sre-agent-demo/tree/main/livereports)
+(the other two cover Arc fleet inventory and priority/lifecycle views, built
+from a shared template) — see the **Open questions** section below for
+whether those should be added here too.
 
 ## This bundle is already environment-generic
 
