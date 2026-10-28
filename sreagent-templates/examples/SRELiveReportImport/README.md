@@ -13,16 +13,20 @@ To install it, download or receive the `.livereport.json` bundle and use the
 clone utility:
 
 ```bash
-python3 sreagent-templates/examples/sre-live-report-import/livereportclone.py import \
+python3 sreagent-templates/examples/sre-live-report-export-import/livereportclone.py import \
   --bundle ./Third-Party-Software-Update-Tracker-<hash>.livereport.json \
   --target /subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.App/agents/<agent-name> \
   --set "subscription=00000000-0000-0000-0000-000000000000" \
-  --set "workspace=11111111-1111-1111-1111-111111111111" \
+  --set "workspaceId=11111111-1111-1111-1111-111111111111" \
   --set "resourceGroup=your-workspace-resource-group"
 ```
 
 Replace the example binding values and bundle path with values from your
-environment and the shared export.
+environment and the shared export. Add `--name "A new report name"` if you
+want the saved report to have a different name from the bundle metadata.
 
 The target agent must already have the required connector and workspace
-permissions. Review and approve any tool-access request in the agent portal.
+permissions. Select the target subscription in Azure CLI before importing.
+Review and approve any tool-access request in the SRE Agent conversation; if
+the embedded agent page in VS Code does not load, open it in an external
+browser.

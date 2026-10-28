@@ -245,10 +245,13 @@ def thread_output(messages, prompt):
     )
 
 
-def export_prompt(selection):
-    request = "all reports returned by ListReports" if selection == ["*"] else (
-        "only these exact report names: %s" % json.dumps(selection, ensure_ascii=False)
-    )
+def export_prompt(selection, report_id=None):
+    if report_id:
+        request = "only the report with this exact report ID: %s" % report_id
+    elif selection == ["*"]:
+        request = "all reports returned by ListReports"
+    else:
+        request = "only these exact report names: %s" % json.dumps(selection, ensure_ascii=False)
     return (
         "Export Azure SRE Agent Live Report source into portable bundle JSON files.\n"
         "Use ListReports to identify %s. For each selected report, call GetReport and "
@@ -326,7 +329,7 @@ def validate_export_manifest(output, bundles):
         fail("source chat manifest does not match the complete bundle list; no files were written")
 
 
-def write_exported_bundles(bundles, out_dir, requested_names):
+def write_exported_bundles(bundles, out_dir, requested_names, expected_report_id=None):
     if not bundles:
         fail("source chat returned no complete bundle markers; no files were written")
     by_name = {}
@@ -335,7 +338,10 @@ def write_exported_bundles(bundles, out_dir, requested_names):
         if name in by_name:
             fail("source chat returned duplicate report name %r" % name)
         by_name[name] = bundle
-    if requested_names != ["*"]:
+    if expected_report_id:
+        if len(bundles) != 1 or bundles[0]["metadata"].get("sourceReportId") != expected_report_id:
+            fail("source chat did not return the requested report ID; no files were written")
+    elif requested_names != ["*"]:
         missing = [name for name in requested_names if name not in by_name]
         extra = sorted(set(by_name) - set(requested_names))
         if missing or extra:
@@ -368,19 +374,25 @@ def write_exported_bundles(bundles, out_dir, requested_names):
 
 
 def export_reports(args):
-    selection = ["*"] if args.all_reports else parse_report_names(args.reports)
+    if args.report_id:
+        selection = []
+    else:
+        selection = ["*"] if args.all_reports else parse_report_names(args.reports)
     validate_agent_uri(args.source, "--source")
     if args.timeout <= 0:
         fail("--timeout must be greater than zero")
     if args.dry_run:
         print("DRY RUN - no Azure requests made.")
         print("Source: " + args.source)
-        print("Selection: " + ("all reports" if selection == ["*"] else ", ".join(selection)))
-        print("\nSource-agent request:\n" + export_prompt(selection))
+        selection_summary = "report ID " + args.report_id if args.report_id else (
+            "all reports" if selection == ["*"] else ", ".join(selection)
+        )
+        print("Selection: " + selection_summary)
+        print("\nSource-agent request:\n" + export_prompt(selection, args.report_id))
         return 0
 
     endpoint, token = agent_access(args.source)
-    prompt = export_prompt(selection)
+    prompt = export_prompt(selection, args.report_id)
     thread_id = start_thread(endpoint, token, prompt)
     state, messages = wait_for_thread(endpoint, token, thread_id, args.timeout)
     output = thread_output(messages, prompt)
@@ -395,7 +407,7 @@ def export_reports(args):
         fail("source agent reported an export failure; no bundle was written", 1)
     bundles = parse_bundle_blocks(output)
     validate_export_manifest(output, bundles)
-    write_exported_bundles(bundles, args.out, selection)
+    write_exported_bundles(bundles, args.out, selection, args.report_id)
     return 0
 
 
@@ -468,6 +480,11 @@ def import_report(args):
     if not isinstance(bundle, dict):
         fail("bundle root must be a JSON object")
     bundle = apply_bundle_bindings(bundle, parse_sets(args.set))
+    if args.name:
+        name = args.name.strip()
+        if not name or len(name) > 128 or any(ord(character) < 32 for character in name):
+            fail("--name must be 1 to 128 characters and contain no control characters")
+        bundle["metadata"]["name"] = name
     errors = validate_bundle(bundle)
     if errors:
         fail("bundle failed validation: %s" % "; ".join(errors))
@@ -524,6 +541,7 @@ def main(argv=None):
     selection = exporter.add_mutually_exclusive_group(required=True)
     selection.add_argument("--allReports", dest="all_reports", action="store_true", help="export all reports")
     selection.add_argument("--reports", help="CSV list of exact report names to export")
+    selection.add_argument("--report-id", help="export one report by its exact ID")
     exporter.add_argument("--out", default="livereport-export", help="bundle output folder")
     common_agent_options(exporter)
     exporter.set_defaults(handler=export_reports)
@@ -531,6 +549,7 @@ def main(argv=None):
     importer = commands.add_parser("import", help="import a shared bundle into a target SRE Agent")
     importer.add_argument("--bundle", required=True, help="path to a .livereport.json bundle")
     importer.add_argument("--target", required=True, help="target SRE Agent ARM resource URI")
+    importer.add_argument("--name", help="name to give the imported report (HTML is not changed)")
     importer.add_argument("--set", action="append", default=[], help="replace a bundle binding using name=value")
     common_agent_options(importer)
     importer.set_defaults(handler=import_report)
